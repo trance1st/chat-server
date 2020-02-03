@@ -2,30 +2,45 @@ package ro.posa;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ClientThread extends Thread {
 
-    Socket socket;
-
-    public ClientThread(Socket socket) {
-        this.socket = socket;
-    }
+    Socket socketClient;
+    Socket socketDest;
+    HashMap<String, Socket> allClients;
 
     @Override
     public void run() {
         try {
-            InputStream inputStream = socket.getInputStream();
-            OutputStream outputStream = socket.getOutputStream();
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            InputStream inputStreamClient = socketClient.getInputStream();
+            OutputStream outputStreamClient = socketClient.getOutputStream();
+            BufferedWriter writerClient = new BufferedWriter(new OutputStreamWriter(outputStreamClient));
+            BufferedReader readerClient = new BufferedReader(new InputStreamReader(inputStreamClient));
 
-            String command = reader.readLine();
-            command = command.replace("cat face ", "");
-            String[] nrs = command.split("plus");
-            writer.write("Rezultatul este " +
-                    (Integer.parseInt(nrs[0].trim()) + Integer.parseInt(nrs[1].trim())) +"\n");
-            writer.flush();
-            writer.close();
+            writerClient.write("Introdu un nume" +"\n");
+            writerClient.flush();
+            String clientName = readerClient.readLine();
+            allClients.put(clientName, socketClient);
+            String allClientsContent = "";
+            for(String c: allClients.keySet()) {
+                allClientsContent = allClientsContent + c +",";
+            }
+            writerClient.write(allClientsContent  + "\n");
+            writerClient.flush();
+            String dest = readerClient.readLine();
+            socketDest = allClients.get(dest);
+
+            InputStream inputStreamDest = socketDest.getInputStream();
+            OutputStream outputStreamDest = socketDest.getOutputStream();
+            BufferedWriter writerDest = new BufferedWriter(new OutputStreamWriter(outputStreamDest));
+            BufferedReader readerDest = new BufferedReader(new InputStreamReader(inputStreamDest));
+
+            while (true) {
+                writerDest.write(readerClient.readLine() + "\n");
+                writerDest.flush();
+            }
         } catch (Exception e) {
 
         }
